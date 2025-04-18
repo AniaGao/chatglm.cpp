@@ -1,0 +1,30 @@
+# List of files and directories to ignore
+
+# Build artifacts
+build/
+*.o
+*.so
+*.dylib
+*.exe
+*.dll
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+
+# Data Files (optional, if large and not to be tracked)
+# data/*
+
+# Private documentation
+private_doc/*
+private_doc/
+
+# Temporary files
+*.tmp
+
+#Other IDE files
+.idea/
+
+.DS_Store
