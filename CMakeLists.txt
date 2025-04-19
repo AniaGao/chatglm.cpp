@@ -1,31 +1,29 @@
 cmake_minimum_required(VERSION 3.15)
-project(chatglmcpp)
+project(chatglm LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+# Add GGML as a submodule.  Assuming it's in a directory called 'ggml'
+add_subdirectory(ggml)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ggml)
 
-# Add GGML as a submodule (or use find_package if you have it installed)
-# add_subdirectory(ggml ggml)
+# Source files
+file(GLOB_RECURSE SOURCES
+    "src/*.cpp"
+    "python/*.cpp"
+)
 
-# pybind11
+add_library(chatglm SHARED ${SOURCES})
+
+# Link against GGML
+target_link_libraries(chatglm ggml)
+
+# Python bindings
 find_package(pybind11 REQUIRED)
 
-add_library(chatglm_core STATIC
-    src/chatglm.cpp
-    src/tokenizer.cpp
-    src/utils.cpp
-)
+add_library(chatglm_module MODULE python/chatglm.cpp)
+target_link_libraries(chatglm_module PRIVATE pybind11::module chatglm)
+target_compile_features(chatglm_module PRIVATE cxx_attribute)
 
-# Link against GGML.  If you're using it as a submodule:
-# target_link_libraries(chatglm_core ggml)
-
-add_library(chatglm_cpp MODULE
-    python/chatglm.cpp
-)
-# Link against the core C++ library
-target_link_libraries(chatglm_cpp chatglm_core ${PYBIND11_LIBRARIES})
-
-set_target_properties(chatglm_cpp PROPERTIES PREFIX ""
-                SUFFIX ".so")
-
+set_target_properties(chatglm_module PROPERTIES PREFIX "" SUFFIX ".so")
