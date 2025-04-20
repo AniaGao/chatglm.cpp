@@ -1,53 +1,51 @@
 #include "chatglm.h"
-#include "tokenizer.h"
-#include "utils.h"
-#include "ggml_wrapper.h"
-
 #include <iostream>
 
-ChatGLM::ChatGLM() : model_path("") {}
-
-ChatGLM::ChatGLM(const std::string& model_path) : model_path(model_path) {
-    // Initialize GGML context (example)
-    ggml_init_params params;
-    params.mem_size = 1024 * 1024 * 1024; // 1GB
-    params.mem_buffer = nullptr;
-    ctx = ggml_init(params);
-    if (!ctx) {
-        std::cerr << "Failed to initialize GGML context" << std::endl;
-        throw std::runtime_error("Failed to initialize GGML context");
+ChatGLM::ChatGLM(int vocab_size, int hidden_size, int num_layers, int num_attention_heads)
+    : vocab_size_(vocab_size), hidden_size_(hidden_size), num_layers_(num_layers), num_attention_heads_(num_attention_heads) {
+    embedding_ = std::make_unique<Embedding>(vocab_size_, hidden_size_);
+    layers_.resize(num_layers_);
+    for (int i = 0; i < num_layers_; ++i) {
+        layers_[i] = std::make_unique<GLMBlock>(hidden_size_, num_attention_heads_);
     }
-
-    // Placeholder for model loading logic using GGML
+    norm_f_ = std::make_unique<RMSNorm>(hidden_size_);
+    lm_head_ = std::make_unique<Linear>(hidden_size_, vocab_size_);
 }
 
-ChatGLM::~ChatGLM() {
-    if (ctx) {
-        ggml_free(ctx);
+std::vector<float> ChatGLM::forward(const std::vector<int>& input_ids) {
+    std::vector<float> embeddings = embedding_->forward(input_ids);
+    std::vector<float> x = embeddings;
+    for (int i = 0; i < num_layers_; ++i) {
+        x = layers_[i]->forward(x);
     }
+    x = norm_f_->forward(x);
+    return lm_head_->forward(x);
 }
 
-std::string ChatGLM::generate(const std::string& prompt) {
-    // Tokenize the prompt
-    std::vector<int> tokens = tokenizer.encode(prompt);
-    
-    // Example GGML tensor creation (replace with actual model inference)
-    std::vector<int64_t> dims = {1, static_cast<int64_t>(tokens.size()) };
-    GGMLTensor input_tensor(ctx, GGML_TYPE_I32, dims);
+Embedding::Embedding(int vocab_size, int hidden_size): vocab_size_(vocab_size), hidden_size_(hidden_size){}
 
-    // Placeholder for model inference logic using GGML
-    std::string output = "This is a dummy response using GGML.";
-    return output;
+std::vector<float> Embedding::forward(const std::vector<int>& input_ids) {
+        // Placeholder implementation
+    std::cout << "Embedding forward pass" << std::endl;
+    return std::vector<float>(input_ids.size() * hidden_size_, 0.0f); // Dummy output
 }
 
-void ChatGLM::load_model(const std::string& path) {
-    this->model_path = path;
+GLMBlock::GLMBlock(int hidden_size, int num_attention_heads) : hidden_size_(hidden_size), num_attention_heads_(num_attention_heads) {}
 
-    //Model loading logic here
-    std::cout << "Model loading placeholder" << std::endl;
+std::vector<float> GLMBlock::forward(const std::vector<float>& input) {
+    // Placeholder implementation
+    std::cout << "GLMBlock forward pass" << std::endl;
+    return input; // Dummy output
 }
 
-void ChatGLM::set_tokenizer_path(const std::string& path)
-{
-    this->tokenizer.set_tokenizer_path(path);
+RMSNorm::RMSNorm(int hidden_size): hidden_size_(hidden_size){}
+std::vector<float> RMSNorm::forward(const std::vector<float>& input){
+    std::cout << "RMSNorm forward pass" << std::endl;
+    return input;
+}
+
+Linear::Linear(int in_features, int out_features): in_features_(in_features), out_features_(out_features){}
+std::vector<float> Linear::forward(const std::vector<float>& input){
+    std::cout << "Linear forward pass" << std::endl;
+    return std::vector<float>(out_features_, 0.0f);
 }
