@@ -1,14 +1,23 @@
 #include <pybind11/pybind11.h>
-#include "chatglm.h"
+#include "src/chatglm.h"
+#include <vector>
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(chatglm, m) {
-    m.doc() = "ChatGLM C++ implementation";
-
     py::class_<ChatGLM>(m, "ChatGLM")
-        .def(py::init<const std::string&>(), py::arg("model_path"))
-        .def("generate", &ChatGLM::generate)
+        .def(py::init<>())
         .def("load_model", &ChatGLM::load_model)
-        .def("set_tokenizer_path", &ChatGLM::set_tokenizer_path);
+        .def("forward", [](ChatGLM &model, const py::list &input_list) {
+            std::vector<float> input;
+            for (auto item : input_list) {
+                input.push_back(py::cast<float>(item));
+            }
+            std::vector<float> output = model.forward(input);
+            py::list output_list;
+            for (float val : output) {
+                output_list.append(val);
+            }
+            return output_list;
+        });
 }

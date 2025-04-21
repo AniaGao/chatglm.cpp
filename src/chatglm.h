@@ -3,69 +3,23 @@
 
 #include <vector>
 #include <string>
-#include <memory>
-
-// Forward declarations
-class Embedding;
-class GLMBlock;
-class RMSNorm;
-class Linear;
+#include <iostream>
 
 class ChatGLM {
 public:
-    ChatGLM(int vocab_size, int hidden_size, int num_layers, int num_attention_heads);
+    ChatGLM();
+    ~ChatGLM();
 
-    std::vector<float> forward(const std::vector<int>& input_ids);
-
-private:
-    int vocab_size_;
-    int hidden_size_;
-    int num_layers_;
-    int num_attention_heads_;
-
-    std::unique_ptr<Embedding> embedding_;
-    std::vector<std::unique_ptr<GLMBlock>> layers_;
-    std::unique_ptr<RMSNorm> norm_f_;
-    std::unique_ptr<Linear> lm_head_;
-
-};
-
-class Embedding {
-public:
-    Embedding(int vocab_size, int hidden_size);
-    std::vector<float> forward(const std::vector<int>& input_ids);
-private:
-    int vocab_size_;
-    int hidden_size_;
-    //TODO: Add weights
-};
-
-class GLMBlock {
-public:
-    GLMBlock(int hidden_size, int num_attention_heads);
+    bool load_model(const std::string& filename);
     std::vector<float> forward(const std::vector<float>& input);
 
 private:
-    int hidden_size_;
-    int num_attention_heads_;
-    // TODO: Add LayerNorm, Attention, and other components
+    // Model parameters (example)
+    int num_layers;
+    int hidden_size;
+    std::vector<std::vector<float>> weights; // Simplified weight storage
+
+    bool initialized = false;
 };
 
-class RMSNorm{
-public:
-    RMSNorm(int hidden_size);
-    std::vector<float> forward(const std::vector<float>& input);
-private:
-    int hidden_size_;
-};
-
-class Linear{
-public:
-    Linear(int in_features, int out_features);
-    std::vector<float> forward(const std::vector<float>& input);
-private:
-    int in_features_;
-    int out_features_;
-};
-
-#endif // CHATGLM_H
+#endif
