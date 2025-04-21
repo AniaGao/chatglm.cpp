@@ -1,11 +1,10 @@
-# examples/inference.py
-import sys
-import os
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from python import chatglm
+import chatglm
 
-if __name__ == "__main__":
-    print("Running inference example...")
-    model = chatglm.ChatGLM()
-    model.inference()
+model = chatglm.ChatGLM()
+model.load_model("model.weights") # Replace with the actual path to your weights file
+
+input_data = [1.0, 2.0, 3.0, 4.0, 5.0]
+output_data = model.forward(input_data)
+
+print(f"Input: {input_data}")
+print(f"Output: {output_data}")

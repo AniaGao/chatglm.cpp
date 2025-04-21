@@ -1,51 +1,57 @@
 #include "chatglm.h"
-#include <iostream>
+#include <fstream>
+#include <stdexcept>
 
-ChatGLM::ChatGLM(int vocab_size, int hidden_size, int num_layers, int num_attention_heads)
-    : vocab_size_(vocab_size), hidden_size_(hidden_size), num_layers_(num_layers), num_attention_heads_(num_attention_heads) {
-    embedding_ = std::make_unique<Embedding>(vocab_size_, hidden_size_);
-    layers_.resize(num_layers_);
-    for (int i = 0; i < num_layers_; ++i) {
-        layers_[i] = std::make_unique<GLMBlock>(hidden_size_, num_attention_heads_);
+ChatGLM::ChatGLM() :
+    num_layers(12),  // Example value
+    hidden_size(768) // Example value
+{
+    // Initialize weights (example)
+    weights.resize(num_layers);
+    for (int i = 0; i < num_layers; ++i) {
+      weights[i].resize(hidden_size * hidden_size); // Example size
     }
-    norm_f_ = std::make_unique<RMSNorm>(hidden_size_);
-    lm_head_ = std::make_unique<Linear>(hidden_size_, vocab_size_);
+
 }
 
-std::vector<float> ChatGLM::forward(const std::vector<int>& input_ids) {
-    std::vector<float> embeddings = embedding_->forward(input_ids);
-    std::vector<float> x = embeddings;
-    for (int i = 0; i < num_layers_; ++i) {
-        x = layers_[i]->forward(x);
+ChatGLM::~ChatGLM() {}
+
+bool ChatGLM::load_model(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return false;
     }
-    x = norm_f_->forward(x);
-    return lm_head_->forward(x);
+
+    // Very basic example: Load number of layers then weights.
+    // In a real implementation, this would involve proper parsing of
+    // the model format (e.g., safetensors, binary).
+    int loaded_num_layers;
+    file.read(reinterpret_cast<char*>(&loaded_num_layers), sizeof(loaded_num_layers));
+
+    if (loaded_num_layers != num_layers) {
+      std::cerr << "Error: Number of layers in file does not match model." << std::endl;
+      file.close();
+      return false;
+    }
+
+    for (int i = 0; i < num_layers; ++i) {
+        file.read(reinterpret_cast<char*>(weights[i].data()), weights[i].size() * sizeof(float));
+    }
+
+    file.close();
+    initialized = true;
+    return true;
 }
 
-Embedding::Embedding(int vocab_size, int hidden_size): vocab_size_(vocab_size), hidden_size_(hidden_size){}
-
-std::vector<float> Embedding::forward(const std::vector<int>& input_ids) {
-        // Placeholder implementation
-    std::cout << "Embedding forward pass" << std::endl;
-    return std::vector<float>(input_ids.size() * hidden_size_, 0.0f); // Dummy output
-}
-
-GLMBlock::GLMBlock(int hidden_size, int num_attention_heads) : hidden_size_(hidden_size), num_attention_heads_(num_attention_heads) {}
-
-std::vector<float> GLMBlock::forward(const std::vector<float>& input) {
-    // Placeholder implementation
-    std::cout << "GLMBlock forward pass" << std::endl;
-    return input; // Dummy output
-}
-
-RMSNorm::RMSNorm(int hidden_size): hidden_size_(hidden_size){}
-std::vector<float> RMSNorm::forward(const std::vector<float>& input){
-    std::cout << "RMSNorm forward pass" << std::endl;
-    return input;
-}
-
-Linear::Linear(int in_features, int out_features): in_features_(in_features), out_features_(out_features){}
-std::vector<float> Linear::forward(const std::vector<float>& input){
-    std::cout << "Linear forward pass" << std::endl;
-    return std::vector<float>(out_features_, 0.0f);
+std::vector<float> ChatGLM::forward(const std::vector<float>& input) {
+    if (!initialized) {
+        throw std::runtime_error("Model not loaded. Call load_model() first.");
+    }
+    // Dummy implementation
+    std::vector<float> output(input.size());
+    for (size_t i = 0; i < input.size(); ++i) {
+        output[i] = input[i] * 2.0f; // Example operation
+    }
+    return output;
 }
