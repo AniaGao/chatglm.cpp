@@ -1,23 +1,15 @@
 #include <pybind11/pybind11.h>
-#include "src/chatglm.h"
-#include <vector>
+#include "../src/chatglm.h"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(chatglm, m) {
+    m.doc() = "pybind11 example plugin"; // optional module docstring
+
     py::class_<ChatGLM>(m, "ChatGLM")
-        .def(py::init<>())
-        .def("load_model", &ChatGLM::load_model)
-        .def("forward", [](ChatGLM &model, const py::list &input_list) {
-            std::vector<float> input;
-            for (auto item : input_list) {
-                input.push_back(py::cast<float>(item));
-            }
-            std::vector<float> output = model.forward(input);
-            py::list output_list;
-            for (float val : output) {
-                output_list.append(val);
-            }
-            return output_list;
-        });
+        .def(py::init<const std::string&>(), py::arg("model_path"))
+        .def("generate", &ChatGLM::generate, py::arg("prompt"), py::arg("max_length") = 2048);
+
+    //Example function, remove after actual implementation
+    m.def("test_func", []() { return "Hello from C++"; }, "A test function");
 }
