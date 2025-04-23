@@ -1,10 +1,19 @@
+import sys
+sys.path.append('../python')
 import chatglm
 
-model = chatglm.ChatGLM()
-model.load_model("model.weights") # Replace with the actual path to your weights file
+# Example usage
+if __name__ == '__main__':
+    # Initialize the ChatGLM model
+    model_path = "/path/to/your/model"
+    model = chatglm.ChatGLM(model_path)
 
-input_data = [1.0, 2.0, 3.0, 4.0, 5.0]
-output_data = model.forward(input_data)
+    #Test the py function is working
+    print("C++ call: " + chatglm.test_func())
 
-print(f"Input: {input_data}")
-print(f"Output: {output_data}")
+    # Generate text based on a prompt
+    prompt = "Write a short story about a cat named mittens"
+    generated_text = model.generate(prompt, max_length=100)
+
+    # Print the generated text
+    print(f"Generated text: {generated_text}")

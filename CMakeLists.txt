@@ -1,12 +1,19 @@
 cmake_minimum_required(VERSION 3.15)
-project(chatglm LANGUAGES CXX)
+project(chatglm)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add GGML as a submodule.  Assuming it's in a directory called 'ggml'
-add_subdirectory(ggml)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ggml)
+# Add pybind11 as a submodule
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v2.11.1 # Use a specific tag for stability
+)
+FetchContent_MakeAvailable(pybind11)
+
+include_directories(${pybind11_INCLUDE_DIRS})
 
 # Source files
 file(GLOB_RECURSE SOURCES
@@ -16,14 +23,11 @@ file(GLOB_RECURSE SOURCES
 
 add_library(chatglm SHARED ${SOURCES})
 
-# Link against GGML
-target_link_libraries(chatglm ggml)
+target_link_libraries(chatglm PRIVATE pybind11::headers)
 
-# Python bindings
-find_package(pybind11 REQUIRED)
+# Create a target alias for direct use in add_executable/add_library
+add_library(chatglm_alias INTERFACE)
+target_link_libraries(chatglm_alias INTERFACE chatglm)
 
-add_library(chatglm_module MODULE python/chatglm.cpp)
-target_link_libraries(chatglm_module PRIVATE pybind11::module chatglm)
-target_compile_features(chatglm_module PRIVATE cxx_attribute)
-
-set_target_properties(chatglm_module PROPERTIES PREFIX "" SUFFIX ".so")
+# Install
+install(TARGETS chatglm DESTINATION lib)
