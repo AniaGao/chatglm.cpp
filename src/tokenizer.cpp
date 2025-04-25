@@ -1,23 +1,27 @@
 #include "tokenizer.h"
-#include <sstream>
+#include "sentencepiece.h"
+#include <memory>
 
-std::vector<std::string> Tokenizer::tokenize(const std::string& text) {
-  std::vector<std::string> tokens;
-  std::stringstream ss(text);
-  std::string token;
-  while (ss >> token) {
-    tokens.push_back(token);
-  }
-  return tokens;
+namespace tokenizer {
+
+class Tokenizer::TokenizerImpl {
+public:
+    TokenizerImpl(const std::string& model_path) : sp(model_path) {}
+    std::vector<int> Encode(const std::string& text) const { return sp.Encode(text); }
+    std::string Decode(const std::vector<int>& tokens) const { return sp.Decode(tokens); }
+private:
+    sentencepiece::SentencePieceTokenizer sp;
+};
+
+Tokenizer::Tokenizer(const std::string& model_path)
+    : impl(std::make_unique<TokenizerImpl>(model_path)) {}
+
+std::vector<int> Tokenizer::Encode(const std::string& text) const {
+    return impl->Encode(text);
 }
 
-std::string Tokenizer::detokenize(const std::vector<std::string>& tokens) {
-  std::string text;
-  for (size_t i = 0; i < tokens.size(); ++i) {
-    text += tokens[i];
-    if (i < tokens.size() - 1) {
-      text += " ";
-    }
-  }
-  return text;
+std::string Tokenizer::Decode(const std::vector<int>& tokens) const {
+    return impl->Decode(tokens);
 }
+
+} // namespace tokenizer

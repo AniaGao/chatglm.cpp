@@ -3,14 +3,21 @@
 
 #include <string>
 #include <vector>
+#include <stdexcept>
+
+namespace tokenizer {
 
 class Tokenizer {
 public:
-  Tokenizer() {}
-  ~Tokenizer() {}
+  Tokenizer(const std::string& model_path);
+  std::vector<int> Encode(const std::string& text) const;
+  std::string Decode(const std::vector<int>& tokens) const;
 
-  std::vector<std::string> tokenize(const std::string& text);
-  std::string detokenize(const std::vector<std::string>& tokens);
+private:
+  class TokenizerImpl;
+  std::unique_ptr<TokenizerImpl> impl;
 };
 
-#endif
+} // namespace tokenizer
+
+#endif // TOKENIZER_H
