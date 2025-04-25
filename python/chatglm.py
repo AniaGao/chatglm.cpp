@@ -1,18 +1,14 @@
 import chatglm
 
-class Model:
-    def __init__(self, model_path, tokenizer_path):
-        self.model = chatglm.ChatGLM(model_path, tokenizer_path)
+class ChatGLM:
+    def __init__(self, config):
+        self.config = chatglm.Config(**config)
 
-    def generate(self, prompt):
-        return self.model.generate(prompt)
+    def create_model_state(self):        
+        return chatglm.create_model_state(self.config)
 
+    def generate(self, state, embeddings, max_length, temperature, top_p, eos_token):
+        return chatglm.generate(state, embeddings, max_length, temperature, top_p, eos_token)
 
-if __name__ == '__main__':
-    # Example usage (replace with actual paths)
-    model_path = "path/to/your/model"  # Replace with your model path
-    tokenizer_path = "path/to/your/tokenizer.model"  # Replace with your tokenizer path
-    model = Model(model_path, tokenizer_path)
-    prompt = "Hello, how are you?"
-    response = model.generate(prompt)
-    print(f"Prompt: {prompt}\nResponse: {response}")
+    def beam_search_generate(self, initial_state, vocab_size, initial_embeddings, beam_size, max_length, eos_token):
+        return chatglm.beam_search_generate(initial_state, vocab_size, initial_embeddings, beam_size, max_length, eos_token)
