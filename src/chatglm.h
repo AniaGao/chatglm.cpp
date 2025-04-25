@@ -1,42 +1,37 @@
 #ifndef CHATGLM_H
 #define CHATGLM_H
 
-#include <string>
 #include <vector>
-#include <memory>
+#include <string>
+#include <iostream>
+#include <stdexcept>
+
+#include "ggml_wrapper.h"
 #include "tokenizer.h"
 
-class Model {
-public:
-    Model(const std::string& model_path) : model_path_(model_path) {}
 
-    std::vector<int> generate(const std::vector<int>& tokens) const {
-        // Placeholder for actual model inference logic
-        // Replace with your ChatGLM model's inference implementation
-        std::vector<int> generated_tokens;
-        for (int i = 0; i < 10; ++i) { // Generate 10 dummy tokens
-            generated_tokens.push_back(i % 10); // Example tokens
-        }
-        return generated_tokens;
-    }
-
-private:
-    std::string model_path_;
+enum DataType {
+    FLOAT32,  // Full precision (float)
+    FLOAT16,  // Half precision (float16)
+    INT8      // 8-bit integer (quantized)
 };
 
 
 class ChatGLM {
 public:
-    ChatGLM(const std::string& model_path, const std::string& tokenizer_path);
-    std::string generate(const std::string& prompt);
+    ChatGLM(const std::string& model_path, DataType data_type = FLOAT32);
+    ~ChatGLM();
+
+    std::string generate(const std::string& prompt, int max_length = 2048);
 
 private:
-    std::unique_ptr<Model> model;
-    Tokenizer tokenizer;
+    std::string model_path_;
+    Tokenizer tokenizer_;
+    ggml_wrapper ggml_wrapper_;
+    DataType data_type_;
 
-    void load_model(const std::string& model_path);
-    void load_tokenizer(const std::string& tokenizer_path);
-
+    std::vector<float> forward(const std::vector<int>& input_ids);
+    std::vector<float> softmax(const std::vector<float>& logits);
 };
 
-#endif
+#endif // CHATGLM_H

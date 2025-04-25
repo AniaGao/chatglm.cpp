@@ -1,14 +1,19 @@
-import chatglm
+from typing import Optional
+import chatglmcpp
 
 class ChatGLM:
-    def __init__(self, config):
-        self.config = chatglm.Config(**config)
+    def __init__(self, model_path: str, data_type: str = "float32") -> None:
+        self.model = chatglmcpp.ChatGLM(model_path, self._convert_data_type(data_type))
 
-    def create_model_state(self):        
-        return chatglm.create_model_state(self.config)
+    def generate(self, prompt: str, max_length: int = 2048) -> str:
+        return self.model.generate(prompt, max_length)
 
-    def generate(self, state, embeddings, max_length, temperature, top_p, eos_token):
-        return chatglm.generate(state, embeddings, max_length, temperature, top_p, eos_token)
-
-    def beam_search_generate(self, initial_state, vocab_size, initial_embeddings, beam_size, max_length, eos_token):
-        return chatglm.beam_search_generate(initial_state, vocab_size, initial_embeddings, beam_size, max_length, eos_token)
+    def _convert_data_type(self, data_type: str) -> int:
+        if data_type.lower() == "float32":
+            return 0  # Assuming 0 maps to FLOAT32 in C++
+        elif data_type.lower() == "float16":
+            return 1  # Assuming 1 maps to FLOAT16 in C++
+        elif data_type.lower() == "int8":
+            return 2  # Assuming 2 maps to INT8 in C++
+        else:
+            raise ValueError("Invalid data type.  Must be float32, float16, or int8")
