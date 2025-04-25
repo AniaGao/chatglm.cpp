@@ -1,33 +1,31 @@
 cmake_minimum_required(VERSION 3.15)
-project(chatglm)
+project(chatglm_cpp)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add pybind11 as a submodule
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+# Find Python
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+
+# SentencePiece
 include(FetchContent)
 FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.11.1 # Use a specific tag for stability
+  sentencepiece
+  GIT_REPOSITORY https://github.com/google/sentencepiece.git
+  GIT_TAG        v0.1.99 # Specify the desired version here
 )
-FetchContent_MakeAvailable(pybind11)
+FetchContent_MakeAvailable(sentencepiece)
+include_directories(${sentencepiece_SOURCE_DIR}/src) # Ensure the sentencepiece headers are available
 
-include_directories(${pybind11_INCLUDE_DIRS})
+add_library(chatglm_cpp src/chatglm.cpp src/tokenizer.cpp src/utils.cpp src/sentencepiece.cpp)
 
-# Source files
-file(GLOB_RECURSE SOURCES
-    "src/*.cpp"
-    "python/*.cpp"
-)
+target_link_libraries(chatglm_cpp sentencepiece::sentencepiece)
 
-add_library(chatglm SHARED ${SOURCES})
 
-target_link_libraries(chatglm PRIVATE pybind11::headers)
-
-# Create a target alias for direct use in add_executable/add_library
-add_library(chatglm_alias INTERFACE)
-target_link_libraries(chatglm_alias INTERFACE chatglm)
-
-# Install
-install(TARGETS chatglm DESTINATION lib)
+# Create Python module
+add_library(chatglm_python SHARED python/chatglm.cpp)
+target_link_libraries(chatglm_python chatglm_cpp ${PYTHON_LIBRARIES})
+set_target_properties(chatglm_python PROPERTIES PREFIX "" SUFFIX ".so")
