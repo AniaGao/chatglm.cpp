@@ -1,33 +1,26 @@
-#ifndef CHATGLM_GGML_WRAPPER_H
-#define CHATGLM_GGML_WRAPPER_H
+#ifndef GGML_WRAPPER_H
+#define GGML_WRAPPER_H
 
-#include "ggml.h"
+#include <string>
 #include <vector>
-#include <stdexcept>
+#include "chatglm.h"
 
-class GGMLTensor {
+class ggml_wrapper {
 public:
-    ggml_tensor *tensor;
+    ggml_wrapper(const std::string& model_path, DataType data_type = FLOAT32);
+    ~ggml_wrapper();
 
-    GGMLTensor(ggml_context *ctx, ggml_type type, const std::vector<int64_t>& dims) {
-        if (dims.size() > 4) {
-            throw std::runtime_error("GGML only supports up to 4 dimensions");
-        }
+    std::vector<float> forward(const std::vector<int>& input_ids);
 
-        std::vector<int64_t> padded_dims = dims;
-        while (padded_dims.size() < 4) {
-            padded_dims.push_back(1);
-        }
+private:
+    std::string model_path_;
+    DataType data_type_;
 
-        tensor = ggml_new_tensor(ctx, type, padded_dims.data(), padded_dims.size());
-        if (tensor == nullptr) {
-            throw std::runtime_error("Failed to allocate GGML tensor");
-        }
-    }
+    // ggml context and other related variables
+    void* ctx_;
 
-    ~GGMLTensor() {
-      // Ownership and freeing of ggml tensors will be handled by the ggml context
-    }
+    bool load_model(const std::string& model_path, DataType data_type);
+
 };
 
-#endif // CHATGLM_GGML_WRAPPER_H
+#endif // GGML_WRAPPER_H

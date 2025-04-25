@@ -1,31 +1,51 @@
 cmake_minimum_required(VERSION 3.15)
-project(chatglm_cpp)
+project(chatglm)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
-include_directories(${CMAKE_SOURCE_DIR}/src)
-
-# Find Python
-find_package(PythonLibs REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/python)
 
 
-# SentencePiece
-include(FetchContent)
-FetchContent_Declare(
-  sentencepiece
-  GIT_REPOSITORY https://github.com/google/sentencepiece.git
-  GIT_TAG        v0.1.99 # Specify the desired version here
+add_library(chatglm_core STATIC
+    src/chatglm.cpp
+    src/tokenizer.cpp
+    src/sentencepiece.cpp
+    src/utils.cpp
+    src/ggml_wrapper.cpp
 )
-FetchContent_MakeAvailable(sentencepiece)
-include_directories(${sentencepiece_SOURCE_DIR}/src) # Ensure the sentencepiece headers are available
 
-add_library(chatglm_cpp src/chatglm.cpp src/tokenizer.cpp src/utils.cpp src/sentencepiece.cpp)
-
-target_link_libraries(chatglm_cpp sentencepiece::sentencepiece)
+# Add GGML as a submodule
+add_subdirectory(ggml)
+target_link_libraries(chatglm_core PRIVATE ggml)
 
 
-# Create Python module
-add_library(chatglm_python SHARED python/chatglm.cpp)
-target_link_libraries(chatglm_python chatglm_cpp ${PYTHON_LIBRARIES})
+# Python Bindings
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+
+add_library(chatglm_python SHARED
+    python/chatglm.cpp
+)
+
+target_link_libraries(chatglm_python PRIVATE chatglm_core)
+target_link_libraries(chatglm_python PRIVATE ggml)
+
 set_target_properties(chatglm_python PROPERTIES PREFIX "" SUFFIX ".so")
+
+
+# Install Python Module
+install(TARGETS chatglm_python DESTINATION ${CMAKE_INSTALL_PREFIX}/${Python_SITE_PACKAGES})
+
+install(DIRECTORY data DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+
+# Benchmarks
+add_executable(benchmark benchmarks/benchmark.py)
+
+
+# Tests
+enable_testing()
+add_executable(test_core tests/test_core.cpp)
+target_link_libraries(test_core chatglm_core)
+add_test(NAME test_core_execution TARGET test_core)
+
