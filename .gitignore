@@ -1,18 +1,25 @@
-# Build artifacts
+# ChatGLM.cpp
+
+# Directories
 build/
+*.d
 *.o
 *.so
-*.dylib
 *.dll
-*.obj
 *.exe
-
-# Dependencies (e.g., GGML submodule)
-ggml/
-
-#VS Code
-.vscode/
-private_doc/*
-.DS_Store
-*.pyc
+*.cache
 __pycache__/
+*.venv
+.pytest_cache
+
+# Files
+*.log
+
+# private documentation
+private_doc/
+
+# OS generated files #
+.DS_Store
+
+private_doc/*
+*.pyc
